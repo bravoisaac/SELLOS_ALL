@@ -10,22 +10,22 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from PIL import ImageTk
-
-from stamping import StampOptions, load_stamp, open_pdf, render_preview, stamp_pdf, list_pdfs, stamp_folder
+from stamping import StampOptions, load_stamp, open_pdf, render_preview_layer, stamp_pdf, list_pdfs, stamp_folder
+from preview import PreviewPane
 
 BG = "#f3f5f9"
 INK = "#17283d"
 MUTED = "#58697e"
 BLUE = "#245edb"
+LAYERS = {"Al fondo": "background", "Al medio (debajo del texto)": "middle", "Delante del texto": "foreground"}
 
 
 def preview_worker(events, version, args):
     try:
-        image, count = render_preview(*args)
-        events.put(("preview", version, image, None, count))
+        image, count, page_size = render_preview_layer(*args)
+        events.put(("preview", version, image, None, count, page_size))
     except Exception as exc:
-        events.put(("preview", version, None, str(exc), 0))
+        events.put(("preview", version, None, str(exc), 0, None))
 
 
 def batch_worker(events, args):
@@ -63,17 +63,21 @@ class StampApp(tk.Tk):
         self.preview_busy = False
         self.preview_version = 0
         self.preview_timer = None
+        self.page_size = None
+        self.updating_position = False
         self.events = multiprocessing.Queue()
         self.worker = None
         self.controls = []
         self.width_value = tk.StringVar(value="35")
         self.top_value = tk.StringVar(value="10")
         self.right_value = tk.StringVar(value="10")
+        self.layer_value = tk.StringVar(value="Al fondo")
         self.status = tk.StringVar(value="Selecciona un PDF o una carpeta y la imagen de tu sello.")
         self._style()
         self._layout()
         for value in (self.width_value, self.top_value, self.right_value):
-            value.trace_add("write", self.schedule_preview)
+            value.trace_add("write", self.options_changed)
+        self.layer_value.trace_add("write", self.schedule_preview)
         self.bind("<Control-o>", lambda _: self.choose_pdf() if not self.busy else None)
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.after(80, self.poll)
@@ -123,7 +127,7 @@ class StampApp(tk.Tk):
         self.stamp_label.grid(row=4, sticky="w")
         ttk.Separator(left).grid(row=5, sticky="ew", pady=20)
         ttk.Label(left, text="02   Posición y tamaño", style="Title.TLabel").grid(row=6, sticky="w")
-        ttk.Label(left, text="Esquina superior derecha · Todas las páginas",
+        ttk.Label(left, text="Arrastra el sello para ubicarlo.\nLa posición se aplica a todas las páginas.",
                   style="Muted.TLabel", wraplength=310).grid(row=7, sticky="w", pady=(6, 14))
         options = ttk.Frame(left, style="Card.TFrame")
         options.grid(row=8, sticky="ew")
@@ -138,8 +142,12 @@ class StampApp(tk.Tk):
             spin.grid(row=row, column=1, padx=(10, 6), pady=5)
             self.controls.append(spin)
             ttk.Label(options, text="mm", style="Muted.TLabel").grid(row=row, column=2)
-        ttk.Label(left, text="La imagen conserva sus proporciones.\nPara un fondo transparente, usa PNG.",
-                  style="Muted.TLabel", wraplength=310).grid(row=9, sticky="w", pady=(12, 0))
+        layer_box = ttk.Frame(left, style="Card.TFrame")
+        layer_box.grid(row=9, sticky="ew", pady=(12, 0))
+        ttk.Label(layer_box, text="Capa del sello").pack(anchor="w", pady=(0, 5))
+        self.layer_selector = ttk.Combobox(layer_box, state="readonly", textvariable=self.layer_value,
+                                           values=list(LAYERS))
+        self.layer_selector.pack(fill="x")
         left.rowconfigure(10, weight=1)
         self.save_button = self.button(left, "Guardar PDF sellado…", self.save, style="Primary.TButton")
         self.save_button.grid(row=11, sticky="ew", pady=(20, 8))
@@ -162,12 +170,12 @@ class StampApp(tk.Tk):
         self.document_selector = ttk.Combobox(right, state="readonly")
         self.document_selector.pack(fill="x", pady=(0, 10))
         self.document_selector.bind("<<ComboboxSelected>>", self.select_document)
-        self.canvas = tk.Canvas(right, bg="#e8edf4", highlightthickness=0)
-        self.canvas.pack(fill="both", expand=True)
-        self.canvas.bind("<Configure>", self.draw_preview)
         self.preview_image = None
         self.preview_error = None
-        ttk.Label(right, text="El sello se coloca detrás del texto. Revisa su visibilidad.", style="Muted.TLabel").pack(anchor="w", pady=(10, 0))
+        self.preview = PreviewPane(right, on_move=self.position_changed)
+        self.preview.pack(fill="both", expand=True)
+        self.canvas = self.preview.canvas
+        ttk.Label(right, text="Elige la capa del sello y revisa el resultado antes de guardar.", style="Muted.TLabel").pack(anchor="w", pady=(10, 0))
         footer = ttk.Frame(self, padding=(20, 0, 20, 14))
         footer.pack(fill="x")
         self.progress = ttk.Progressbar(footer, mode="determinate")
@@ -185,7 +193,7 @@ class StampApp(tk.Tk):
                       (self.width_value, self.top_value, self.right_value)]
         except ValueError:
             raise ValueError("Introduce números en el ancho y los márgenes.") from None
-        result = StampOptions(*values)
+        result = StampOptions(*values, layer=LAYERS[self.layer_value.get()])
         result.validate()
         return result
 
@@ -243,7 +251,7 @@ class StampApp(tk.Tk):
             stamp = load_stamp(path)
             self.stamp_path, self.stamp = path, stamp
             self.stamp_label.config(text=Path(path).name)
-            self.schedule_preview()
+            self.draw_preview()
             self.update_controls()
         except Exception as exc:
             messagebox.showerror("No se pudo abrir la imagen", str(exc))
@@ -254,6 +262,7 @@ class StampApp(tk.Tk):
         if not self.pdf or not self.stamp:
             self.save_button.state(["disabled"])
         self.document_selector.configure(state="disabled" if self.busy or not self.pdf_files else "readonly")
+        self.layer_selector.configure(state="disabled" if self.busy else "readonly")
         self.save_button.configure(text="Sellar toda la carpeta" if self.folder else "Guardar PDF sellado…")
         self.destination_label.configure(text="Copias en una nueva subcarpeta Sellados.\nLos originales se conservan."
                                          if self.folder else "Se guarda una copia. El original se conserva.")
@@ -262,6 +271,7 @@ class StampApp(tk.Tk):
         if self.page >= self.pages - 1 or self.busy:
             self.next_button.state(["disabled"])
         self.page_label.config(text=f"{self.page + 1} / {self.pages}" if self.pages else "Sin documento")
+        self.preview.enabled = not self.busy and self.preview_image is not None
 
     def move(self, delta):
         self.page = max(0, min(self.pages - 1, self.page + delta))
@@ -270,6 +280,8 @@ class StampApp(tk.Tk):
 
     def schedule_preview(self, *_):
         self.preview_version += 1
+        self.preview_image, self.page_size, self.preview_error = None, None, None
+        self.draw_preview()
         if self.preview_timer:
             self.after_cancel(self.preview_timer)
         self.preview_timer = self.after(300, self.start_preview)
@@ -281,35 +293,36 @@ class StampApp(tk.Tk):
         if self.busy or self.preview_busy:
             self.preview_timer = self.after(150, self.start_preview)
             return
-        try:
-            options = self.options()
-        except ValueError as exc:
-            self.preview_image, self.preview_error = None, str(exc)
-            self.draw_preview()
-            return
         self.preview_busy = True
         version = self.preview_version
-        args = (self.pdf, self.page, self.stamp, options)
+        args = (self.pdf, self.page, LAYERS[self.layer_value.get()])
         self.status.set("Actualizando vista previa…")
         self.worker = multiprocessing.Process(target=preview_worker,
             args=(self.events, version, args), daemon=True)
         self.worker.start()
 
     def draw_preview(self, *_):
-        self.canvas.delete("all")
-        w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
-        if self.preview_image is None:
-            self.canvas.create_text(w / 2, h / 2, text=self.preview_error or
-                                    "Aquí verás tu documento\ncon el sello aplicado", fill=MUTED,
-                                    font=("Segoe UI", 12), width=max(100, w - 60), justify="center")
-            return
-        image = self.preview_image.copy()
-        image.thumbnail((max(1, w - 32), max(1, h - 32)))
-        self.photo = ImageTk.PhotoImage(image)
-        self.canvas.create_rectangle((w - image.width) / 2 + 3, (h - image.height) / 2 + 3,
-                                     (w + image.width) / 2 + 3, (h + image.height) / 2 + 3,
-                                     fill="#c5cddb", outline="")
-        self.canvas.create_image(w / 2, h / 2, image=self.photo)
+        error = self.preview_error
+        try:
+            options = self.options()
+        except ValueError as exc:
+            options, error = None, str(exc)
+        self.preview.set_content(self.preview_image, self.page_size, self.stamp, options,
+                                 error=error, enabled=not self.busy)
+
+    def options_changed(self, *_):
+        if not self.updating_position:
+            self.draw_preview()
+
+    def position_changed(self, options):
+        self.updating_position = True
+        try:
+            self.top_value.set(f"{options.top_mm:.6f}".rstrip("0").rstrip("."))
+            self.right_value.set(f"{options.right_mm:.6f}".rstrip("0").rstrip("."))
+        finally:
+            self.updating_position = False
+        self.draw_preview()
+        self.status.set("Posición actualizada. Se usará en todas las páginas y los PDF de la carpeta.")
 
     def save(self):
         if self.busy or not self.pdf or not self.stamp_path:
@@ -344,7 +357,7 @@ class StampApp(tk.Tk):
                 if event[0] == "preview":
                     self.preview_busy = False
                     if event[1] == self.preview_version:
-                        self.preview_image, self.preview_error, self.pages = event[2:]
+                        self.preview_image, self.preview_error, self.pages, self.page_size = event[2:]
                         self.update_controls()
                         self.draw_preview()
                         self.status.set(event[3] or "Vista previa lista. Ajusta el sello y guarda tu copia.")

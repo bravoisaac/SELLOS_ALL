@@ -12,6 +12,7 @@ from typing import Callable
 
 import pymupdf
 from PIL import Image, ImageOps
+from pdf_layers import split_page
 
 MM = 72 / 25.4
 
@@ -86,8 +87,11 @@ class StampOptions:
     width_mm: float = 35
     top_mm: float = 10
     right_mm: float = 10
+    layer: str = "background"
 
     def validate(self):
+        if self.layer not in {"background", "middle", "foreground"}:
+            raise ValueError("Selecciona una capa válida para el sello.")
         values = (self.width_mm, self.top_mm, self.right_mm)
         if not all(math.isfinite(v) for v in values):
             raise ValueError("Introduce medidas numéricas válidas.")
@@ -131,6 +135,8 @@ def stamp_rect(page, ratio: float, options: StampOptions) -> pymupdf.Rect:
 
 
 def insert_stamp(page, png: bytes, ratio: float, options: StampOptions, xref: int = 0) -> int:
+    if options.layer == "middle":
+        return insert_middle_stamp(page, png, ratio, options, xref)
     rect = stamp_rect(page, ratio, options) * page.derotation_matrix
     # insert_image gira antihorario; compensa la rotación horaria de la página.
     rotation = page.rotation
@@ -139,9 +145,35 @@ def insert_stamp(page, png: bytes, ratio: float, options: StampOptions, xref: in
     page.set_rotation(0)
     try:
         return page.insert_image(rect, stream=png if not xref else None, xref=xref,
-                                 rotate=rotation, keep_proportion=False, overlay=False)
+                                 rotate=rotation, keep_proportion=False, overlay=options.layer == "foreground")
     finally:
         page.set_rotation(rotation)
+
+
+def insert_middle_stamp(page, png, ratio, options, xref=0):
+    stamp_rect(page, ratio, options)
+    with split_page(page) as (graphics, text):
+        rotation = page.rotation
+        page.set_rotation(0)
+        graphics[0].set_rotation(0)
+        text[0].set_rotation(0)
+        try:
+            # Reemplazar solo el contenido dibujado; conservar anotaciones, enlaces y widgets.
+            blank = page.parent.get_new_xref()
+            page.parent.update_object(blank, "<<>>")
+            page.parent.update_stream(blank, b"")
+            page.set_contents(blank)
+            if graphics[0].read_contents():
+                page.show_pdf_page(page.rect, graphics, 0)
+            page.set_rotation(rotation)
+            from dataclasses import replace
+            xref = insert_stamp(page, png, ratio, replace(options, layer="foreground"), xref)
+            page.set_rotation(0)
+            if text[0].read_contents():
+                page.show_pdf_page(page.rect, text, 0)
+            return xref
+        finally:
+            page.set_rotation(rotation)
 
 
 def render_preview(pdf_path: str | Path, page_number: int, stamp: tuple[bytes, float] | None,
@@ -153,6 +185,24 @@ def render_preview(pdf_path: str | Path, page_number: int, stamp: tuple[bytes, f
         scale = min(max_size[0] / page.rect.width, max_size[1] / page.rect.height, 2)
         pix = page.get_pixmap(matrix=pymupdf.Matrix(scale, scale), colorspace=pymupdf.csRGB, alpha=False)
         return Image.frombytes("RGB", (pix.width, pix.height), pix.samples), len(doc)
+
+
+def render_preview_layer(pdf_path: str | Path, page_number: int, layer="background"):
+    """Contenido original transparente para mover el sello debajo sin volver a abrir el PDF."""
+    with open_pdf(pdf_path) as doc:
+        page = doc[page_number]
+        width, height = page.rect.width, page.rect.height
+        scale = min(4, 4096 / max(width, height), math.sqrt(9_000_000 / (width * height)))
+        def render(target):
+            pix = target.get_pixmap(matrix=pymupdf.Matrix(scale, scale), colorspace=pymupdf.csRGB, alpha=True)
+            # MuPDF entrega alfa premultiplicado; Pillow requiere RGBA sin premultiplicar.
+            return Image.frombytes("RGBa", (pix.width, pix.height), pix.samples).convert("RGBA")
+        if layer == "middle":
+            with split_page(page) as (graphics, text):
+                image = (render(graphics[0]), render(text[0]))
+        else:
+            image = render(page)
+        return image, len(doc), (width, height)
 
 
 def stamp_pdf(pdf_path: str | Path, image_path: str | Path, output_path: str | Path,
