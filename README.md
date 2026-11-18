@@ -2,21 +2,15 @@
 
 Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas las páginas** de un PDF y permite elegir si queda al fondo, al medio o delante del texto. El sello comienza arriba a la derecha y puedes moverlo con el mouse en la vista previa. Funciona localmente, sin subir documentos a internet.
 
-## Descargar la versión actualizada
+## Descarga suspendida
 
-**Última actualización: 29 de octubre de 2026.** Esta entrega incluye el selector de capas **Al fondo / Al medio / Delante del texto**, el movimiento del sello con el mouse, zoom y sellado de carpetas completas.
+**18 de noviembre de 2026:** Windows Defender detectó `Trojan:Win32/Ulthar.A!ml` en la compilación distribuida de `SelloPDF.exe`. El enlace se retiró de este README mientras se investiga. No se ha confirmado que sea un falso positivo. No ejecutes ni restaures ese archivo y no añadas exclusiones al antivirus. Los binarios de entregas anteriores, incluido el ZIP, no constituyen una alternativa validada.
 
-- **[Descargar SelloPDF.exe para Windows de 64 bits](https://github.com/bravoisaac/SELLOS_ALL/raw/refs/heads/main/SelloPDF.exe)** — descarga únicamente la aplicación portable en un solo archivo.
+El archivo detectado tiene SHA-256 `E3687EC15C8846366545481DE1137A488DEBA16631FD41438CC552D40CF0D778`. Las pruebas funcionales y la disponibilidad de la descarga no certifican su seguridad.
 
-Guarda `SelloPDF.exe` y ábrelo con doble clic. No necesitas extraer un ZIP, instalar Python ni descargar archivos adicionales. El procesamiento de documentos funciona sin conexión a internet.
+Además, este equipo bloquea el ejecutable y una biblioteca gráfica por su política de firmas. La publicación se retomará después de revisar la detección con el proveedor, verificar el funcionamiento y resolver la firma requerida por los equipos de destino. No se recomienda desactivar la protección de Windows.
 
-Si tienes una versión anterior abierta, ciérrala y abre el ejecutable de esta entrega. Para reconocer la versión actual, comprueba que aparezca el selector **Capa del sello** con las tres opciones, además de los controles **+**, **−** y **Ajustar** en la vista previa.
-
-El enlace apunta a `SelloPDF.exe` en la raíz de la rama `main` del repositorio. Al publicar una entrega, sube ese archivo junto con este README para mantener disponible la descarga.
-
-### Si Windows bloquea la apertura
-
-Esta compilación no tiene firma de código. Si aparece «Una directiva de Control de aplicaciones bloqueó este archivo», el equipo requiere una versión firmada con un certificado aceptado por su política o la autorización del administrador. Ese bloqueo impide abrir la app; no se resuelve descargando nuevamente el archivo.
+**Validación del nuevo candidato:** reconstruido desde dependencias oficiales verificadas por SHA-256. Pasaron las 32 pruebas del motor, la prueba gráfica con exportación y la apertura/cierre del nuevo ejecutable. Defender no registró detecciones en ese análisis local. El candidato sigue sin firma y no está publicado; estos resultados no demuestran que la alerta anterior fuera un falso positivo ni garantizan que Opera permita la descarga.
 
 ## Qué permite hacer
 
@@ -28,7 +22,9 @@ Esta compilación no tiene firma de código. Si aparece «Una directiva de Contr
 
 ## Uso
 
-1. Abre el archivo descargado `SelloPDF.exe` con doble clic. No necesita Python instalado.
+Las instrucciones siguientes describen el uso de una versión validada; no ejecutes la compilación retirada.
+
+1. Abre la versión validada de `SelloPDF.exe` con doble clic. No necesita Python instalado.
 2. Pulsa **Un PDF…** y elige el documento.
 3. Pulsa **Seleccionar imagen del sello**. Admite PNG, JPG, WEBP, BMP y TIFF.
 4. Ajusta el ancho y los márgenes superior y derecho en milímetros. Por defecto usa un ancho de 35 mm y márgenes de 10 mm. La altura conserva la proporción de la imagen.
@@ -86,10 +82,15 @@ Pruebas y compilación:
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 .\.venv\Scripts\python.exe tests/gui_smoke.py
+.\tests\release_checks.ps1
 .\build.ps1
 ```
 
-`build.ps1 -Python 'C:\ruta\python.exe'` permite elegir el intérprete al crear el entorno. El script comprueba las dependencias gráficas, ejecuta las pruebas y genera `dist/SelloPDF.exe`; después copia el resultado a `SelloPDF.exe` en la raíz para publicarlo con el enlace de descarga. No incluye instalador ni firma de código.
+`build.ps1 -Python 'C:\ruta\python.exe'` requiere Python 3.12 de 64 bits y crea un entorno independiente en `build/release-<id>/venv`. Instala únicamente las ruedas oficiales fijadas por URL y SHA-256 en `requirements-windows.lock`, sin reutilizar la caché ni el entorno de desarrollo. El archivo de bloqueo incluye las dependencias transitivas del empaquetador; debe revisarse al actualizar `requirements.txt`.
+
+La compilación requiere Defender activo y permisos para consultar sus detecciones. Analiza el entorno, comprueba las dependencias gráficas, ejecuta las pruebas del motor y de la interfaz, genera un candidato, analiza el ejecutable y comprueba su apertura y cierre. Cualquier fallo detiene el proceso y queda registrado en `build/release-<id>/validation.json`. No se desactiva ni modifica la protección.
+
+El candidato permanece en `build/release-<id>/dist/SelloPDF.exe`; no se copia automáticamente a la raíz ni se publica. Un análisis sin detecciones no revoca el aviso anterior: antes de distribuirlo falta la revisión del proveedor y, donde corresponda, una firma de código aceptada. Los archivos antiguos en `dist/`, en la raíz o en el ZIP no se actualizan al fallar una compilación.
 
 ## Archivos y validación
 
@@ -102,6 +103,8 @@ Pruebas y compilación:
 - `tests/test_preview.py`: conversión del arrastre, límites de página y coincidencia de las capas con la salida en páginas rotadas y recortadas.
 - `tests/test_layers.py`: tres órdenes de capas, fondos de imagen, texto seleccionable, formularios gráficos anidados, enlaces, campos y documentos que no admiten separación.
 - `tests/gui_smoke.py`: integración de selección de carpeta, vista previa, proceso de lote, resumen y regreso al modo individual; requiere escritorio Windows disponible.
+- `tests/release_checks.ps1`: ocho escenarios de análisis y remediación simulados; verifica que una detección, protección desactivada o error impidan validar una entrega, sin modificar Defender.
+- `requirements-windows.lock`: diez dependencias de compilación, con URLs oficiales y hashes SHA-256 para Python 3.12/Windows x64.
 - `MAPA.md`: conexiones y alcance del proyecto.
 
 La inserción usa las coordenadas de página descritas en la [documentación oficial de PyMuPDF](https://pymupdf.readthedocs.io/en/latest/page.html). Se conserva el documento PDF; sus páginas no se convierten en capturas de pantalla.
