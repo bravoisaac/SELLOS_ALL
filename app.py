@@ -8,10 +8,12 @@ import queue
 import sys
 import tkinter as tk
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox, simpledialog, ttk
 
 from stamping import StampOptions, load_stamp, open_pdf, render_preview_layer, stamp_pdf, list_pdfs, stamp_folder
 from preview import PreviewPane
+from stamp_library import StampLibrary
+from ui_components import ScrollableSettings
 
 BG = "#f3f5f9"
 INK = "#17283d"
@@ -45,17 +47,24 @@ def stamp_worker(events, args):
 
 
 class StampApp(tk.Tk):
-    def __init__(self):
+    def __init__(self, library_dir=None):
         super().__init__()
         self.title("Sello PDF")
-        self.geometry("1120x800")
-        self.minsize(960, 740)
+        width = min(1180, max(640, self.winfo_screenwidth() - 80))
+        height = min(820, max(520, self.winfo_screenheight() - 120))
+        self.geometry(f"{width}x{height}")
+        self.minsize(640, 520)
         self.configure(bg=BG)
         self.pdf = None
         self.folder = None
         self.pdf_files = []
         self.stamp_path = None
         self.stamp = None
+        self.library = StampLibrary(library_dir)
+        self.saved_stamps = []
+        self.selected_stamp_id = None
+        self.layout_mode = None
+        self.active_panel = tk.StringVar(value="settings")
         self.page = 0
         self.pages = 0
         self.output = None
@@ -75,12 +84,13 @@ class StampApp(tk.Tk):
         self.status = tk.StringVar(value="Selecciona un PDF o una carpeta y la imagen de tu sello.")
         self._style()
         self._layout()
+        self.refresh_library()
         for value in (self.width_value, self.top_value, self.right_value):
             value.trace_add("write", self.options_changed)
         self.layer_value.trace_add("write", self.schedule_preview)
         self.bind("<Control-o>", lambda _: self.choose_pdf() if not self.busy else None)
         self.protocol("WM_DELETE_WINDOW", self.close)
-        self.after(80, self.poll)
+        self.poll_timer = self.after(80, self.poll)
 
     def _style(self):
         style = ttk.Style(self)
@@ -95,6 +105,7 @@ class StampApp(tk.Tk):
         style.map("Primary.TButton", background=[("disabled", "#b8c5db"), ("active", "#1949b3")])
         style.configure("TSpinbox", padding=7, font=("Segoe UI", 11))
         style.configure("Horizontal.TProgressbar", background=BLUE, troughcolor="#e6ebf3", borderwidth=0)
+        style.configure("Panel.Toolbutton", font=("Segoe UI", 10), padding=(16, 8))
 
     def button(self, parent, text, command, **kwargs):
         result = ttk.Button(parent, text=text, command=command, **kwargs)
@@ -102,18 +113,26 @@ class StampApp(tk.Tk):
         return result
 
     def _layout(self):
-        header = tk.Frame(self, bg=INK, padx=28, pady=20)
-        header.pack(fill="x")
-        tk.Label(header, text="Sello PDF", font=("Segoe UI Semibold", 24), fg="white", bg=INK).pack(anchor="w")
-        tk.Label(header, text="Tu sello en cada página, en unos pasos.", font=("Segoe UI", 11),
-                 fg="#c6d4e6", bg=INK).pack(anchor="w", pady=(3, 0))
-        body = ttk.Frame(self, padding=20)
-        body.pack(fill="both", expand=True)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.header = header = tk.Frame(self, bg=INK, padx=20, pady=12)
+        header.grid(row=0, column=0, sticky="ew")
+        self.title_label = tk.Label(header, text="Sello PDF", font=("Segoe UI Semibold", 22), fg="white", bg=INK)
+        self.title_label.pack(anchor="w")
+        self.subtitle = tk.Label(header, text="Tus documentos, tus sellos. Todo en tu equipo.", font=("Segoe UI", 10),
+                                 fg="#c6d4e6", bg=INK)
+        self.subtitle.pack(anchor="w", pady=(3, 0))
+        self.body = body = ttk.Frame(self, padding=12)
+        body.grid(row=1, column=0, sticky="nsew")
         body.columnconfigure(1, weight=1)
-        body.rowconfigure(0, weight=1)
-        left = ttk.Frame(body, style="Card.TFrame", padding=20, width=360)
-        left.grid(row=0, column=0, sticky="nsew", padx=(0, 16))
-        left.grid_propagate(False)
+        body.rowconfigure(1, weight=1)
+        self.panel_switcher = ttk.Frame(body)
+        for text, panel in [("Archivos y sellos", "settings"), ("Vista previa", "preview")]:
+            ttk.Radiobutton(self.panel_switcher, text=text, value=panel, variable=self.active_panel,
+                            style="Panel.Toolbutton", command=self.show_panel).pack(side="left", padx=(0, 6))
+        self.settings_panel = ScrollableSettings(body)
+        self.settings_panel.grid(row=1, column=0, sticky="nsew", padx=(0, 12))
+        left = self.settings_panel.content
         left.columnconfigure(0, weight=1)
         ttk.Label(left, text="01   Archivos", style="Title.TLabel").grid(row=0, sticky="w")
         sources = ttk.Frame(left, style="Card.TFrame")
@@ -122,15 +141,28 @@ class StampApp(tk.Tk):
         self.button(sources, "Carpeta de PDF…", self.choose_folder).pack(side="left", fill="x", expand=True)
         self.pdf_label = ttk.Label(left, text="Ningún documento seleccionado", style="Muted.TLabel", wraplength=310)
         self.pdf_label.grid(row=2, sticky="w")
-        self.button(left, "Seleccionar imagen del sello…", self.choose_stamp).grid(row=3, sticky="ew", pady=(16, 5))
+        ttk.Separator(left).grid(row=3, sticky="ew", pady=16)
+        ttk.Label(left, text="02   Mis sellos", style="Title.TLabel").grid(row=4, sticky="w")
+        self.library_selector = ttk.Combobox(left, state="readonly")
+        self.library_selector.grid(row=5, sticky="ew", pady=(10, 6))
+        self.library_selector.bind("<<ComboboxSelected>>", self.select_saved_stamp)
+        self.library_hint = ttk.Label(left, text="", style="Muted.TLabel", wraplength=310)
+        self.library_hint.grid(row=6, sticky="w", pady=(0, 8))
+        self.button(left, "Elegir imagen del sello…", self.choose_stamp).grid(row=7, sticky="ew", pady=(0, 5))
         self.stamp_label = ttk.Label(left, text="PNG, JPG, WEBP, BMP o TIFF", style="Muted.TLabel", wraplength=310)
-        self.stamp_label.grid(row=4, sticky="w")
-        ttk.Separator(left).grid(row=5, sticky="ew", pady=20)
-        ttk.Label(left, text="02   Posición y tamaño", style="Title.TLabel").grid(row=6, sticky="w")
+        self.stamp_label.grid(row=8, sticky="w")
+        library_actions = ttk.Frame(left, style="Card.TFrame")
+        library_actions.grid(row=9, sticky="ew", pady=(10, 0))
+        self.save_stamp_button = self.button(library_actions, "Guardar sello…", self.save_stamp_to_library)
+        self.save_stamp_button.pack(side="left", fill="x", expand=True, padx=(0, 6))
+        self.delete_stamp_button = self.button(library_actions, "Eliminar…", self.delete_saved_stamp)
+        self.delete_stamp_button.pack(side="right")
+        ttk.Separator(left).grid(row=10, sticky="ew", pady=16)
+        ttk.Label(left, text="03   Posición y tamaño", style="Title.TLabel").grid(row=11, sticky="w")
         ttk.Label(left, text="Arrastra el sello para ubicarlo.\nLa posición se aplica a todas las páginas.",
-                  style="Muted.TLabel", wraplength=310).grid(row=7, sticky="w", pady=(6, 14))
+                  style="Muted.TLabel", wraplength=310).grid(row=12, sticky="w", pady=(6, 10))
         options = ttk.Frame(left, style="Card.TFrame")
-        options.grid(row=8, sticky="ew")
+        options.grid(row=13, sticky="ew")
         options.columnconfigure(0, weight=1)
         for row, (label, value, minimum) in enumerate([
             ("Ancho del sello", self.width_value, 1),
@@ -143,21 +175,17 @@ class StampApp(tk.Tk):
             self.controls.append(spin)
             ttk.Label(options, text="mm", style="Muted.TLabel").grid(row=row, column=2)
         layer_box = ttk.Frame(left, style="Card.TFrame")
-        layer_box.grid(row=9, sticky="ew", pady=(12, 0))
+        layer_box.grid(row=14, sticky="ew", pady=(12, 0))
         ttk.Label(layer_box, text="Capa del sello").pack(anchor="w", pady=(0, 5))
         self.layer_selector = ttk.Combobox(layer_box, state="readonly", textvariable=self.layer_value,
                                            values=list(LAYERS))
         self.layer_selector.pack(fill="x")
-        left.rowconfigure(10, weight=1)
-        self.save_button = self.button(left, "Guardar PDF sellado…", self.save, style="Primary.TButton")
-        self.save_button.grid(row=11, sticky="ew", pady=(20, 8))
-        self.save_button.state(["disabled"])
         self.destination_label = ttk.Label(left, text="Se guarda una copia. El original se conserva.",
                                            style="Muted.TLabel", wraplength=310)
-        self.destination_label.grid(row=12, sticky="w")
+        self.destination_label.grid(row=15, sticky="w", pady=(16, 0))
 
-        right = ttk.Frame(body, style="Card.TFrame", padding=16)
-        right.grid(row=0, column=1, sticky="nsew")
+        self.preview_panel = right = ttk.Frame(body, style="Card.TFrame", padding=12)
+        right.grid(row=1, column=1, sticky="nsew")
         toolbar = ttk.Frame(right, style="Card.TFrame")
         toolbar.pack(fill="x", pady=(0, 12))
         ttk.Label(toolbar, text="Vista previa", style="Title.TLabel").pack(side="left")
@@ -175,17 +203,64 @@ class StampApp(tk.Tk):
         self.preview = PreviewPane(right, on_move=self.position_changed)
         self.preview.pack(fill="both", expand=True)
         self.canvas = self.preview.canvas
-        ttk.Label(right, text="Elige la capa del sello y revisa el resultado antes de guardar.", style="Muted.TLabel").pack(anchor="w", pady=(10, 0))
-        footer = ttk.Frame(self, padding=(20, 0, 20, 14))
-        footer.pack(fill="x")
+        self.preview_hint = ttk.Label(right, text="Revisa el sello antes de guardar. Los originales se conservan.",
+                                      style="Muted.TLabel", wraplength=450)
+        self.preview_hint.pack(anchor="w", pady=(8, 0))
+        footer = ttk.Frame(self, padding=(12, 0, 12, 12))
+        footer.grid(row=2, column=0, sticky="ew")
+        footer.columnconfigure(0, weight=1)
         self.progress = ttk.Progressbar(footer, mode="determinate")
-        self.progress.pack(fill="x", pady=(0, 8))
-        self.open_button = ttk.Button(footer, text="Abrir resultado", command=self.open_output)
-        self.open_button.pack(side="right", padx=(12, 0))
+        self.progress.grid(row=0, column=0, sticky="ew", pady=(0, 6))
+        self.status_label = tk.Label(footer, textvariable=self.status, bg=BG, fg=MUTED, font=("Segoe UI", 10),
+                                    anchor="w", wraplength=780, justify="left", height=2)
+        self.status_label.grid(row=1, column=0, sticky="ew", pady=(0, 6))
+        actions = ttk.Frame(footer)
+        actions.grid(row=2, column=0, sticky="ew")
+        self.open_button = ttk.Button(actions, text="Abrir resultado", command=self.open_output)
+        self.open_button.pack(side="left")
         self.open_button.state(["disabled"])
-        tk.Label(footer, textvariable=self.status, bg=BG, fg=MUTED, font=("Segoe UI", 10),
-                 anchor="w", wraplength=780, justify="left").pack(side="left", fill="x", expand=True)
+        self.save_button = self.button(actions, "Guardar PDF sellado…", self.save, style="Primary.TButton")
+        self.save_button.pack(side="right")
+        self.bind("<Configure>", self.resize_layout, add="+")
         self.update_controls()
+
+    def resize_layout(self, event):
+        if event.widget is not self:
+            return
+        sidebar_width = max(350, self.settings_panel.content.winfo_reqwidth() + 20)
+        mode = "compact" if event.width < sidebar_width + 480 else "wide"
+        self.status_label.configure(wraplength=max(200, event.width - 32))
+        self.preview_hint.configure(wraplength=max(200, self.preview_panel.winfo_width() - 30))
+        if mode != self.layout_mode:
+            self.layout_mode = mode
+            self.settings_panel.canvas.configure(width=sidebar_width - 20)
+            self.show_panel()
+
+    def show_panel(self):
+        if self.layout_mode == "compact":
+            self.header.configure(pady=6)
+            self.title_label.configure(font=("Segoe UI Semibold", 18))
+            self.subtitle.pack_forget()
+            self.preview_hint.pack_forget()
+            self.preview.help_label.pack_forget()
+            self.panel_switcher.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+            self.body.columnconfigure(0, weight=1)
+            self.body.columnconfigure(1, weight=0)
+            self.settings_panel.grid_remove()
+            self.preview_panel.grid_remove()
+            panel = self.preview_panel if self.active_panel.get() == "preview" else self.settings_panel
+            panel.grid(row=1, column=0, sticky="nsew", padx=0)
+        else:
+            self.header.configure(pady=12)
+            self.title_label.configure(font=("Segoe UI Semibold", 22))
+            self.subtitle.pack(anchor="w", pady=(3, 0))
+            self.preview_hint.pack(anchor="w", pady=(8, 0))
+            self.preview.help_label.pack(anchor="w", pady=(7, 0))
+            self.panel_switcher.grid_remove()
+            self.body.columnconfigure(0, weight=0)
+            self.body.columnconfigure(1, weight=1)
+            self.settings_panel.grid(row=1, column=0, sticky="nsew", padx=(0, 12))
+            self.preview_panel.grid(row=1, column=1, sticky="nsew", padx=0)
 
     def options(self):
         try:
@@ -250,17 +325,116 @@ class StampApp(tk.Tk):
         try:
             stamp = load_stamp(path)
             self.stamp_path, self.stamp = path, stamp
+            self.selected_stamp_id = None
+            self.library_selector.set("Elige un sello guardado" if self.saved_stamps else "Sin sellos guardados")
             self.stamp_label.config(text=Path(path).name)
             self.draw_preview()
             self.update_controls()
         except Exception as exc:
             messagebox.showerror("No se pudo abrir la imagen", str(exc))
 
+    def refresh_library(self, select_id=None):
+        self.selected_stamp_id = select_id or self.selected_stamp_id
+        try:
+            self.saved_stamps = self.library.list()
+            count = len(self.saved_stamps)
+            hint = ("1 sello guardado en este equipo." if count == 1 else f"{count} sellos guardados en este equipo.") if count else "Guarda un sello y podrás reutilizarlo al volver a abrir la app."
+            if self.library.unreadable_count:
+                hint += f" No se pudieron leer {self.library.unreadable_count} archivo(s)."
+            self.library_hint.configure(text=hint)
+        except OSError:
+            self.saved_stamps = []
+            self.library_hint.configure(text="No se pudo leer la biblioteca. Comprueba los permisos de tu perfil.")
+        self.library_selector.configure(values=[entry.name for entry in self.saved_stamps])
+        index = next((i for i, entry in enumerate(self.saved_stamps) if entry.id == self.selected_stamp_id), None)
+        if index is None:
+            self.selected_stamp_id = None
+            self.library_selector.set("Elige un sello guardado" if self.saved_stamps else "Sin sellos guardados")
+        else:
+            self.library_selector.current(index)
+        self.update_controls()
+
+    def save_stamp_to_library(self):
+        if self.busy or not self.stamp:
+            return
+        try:
+            options = self.options()
+            selected = next((entry for entry in self.saved_stamps if entry.id == self.selected_stamp_id), None)
+            initial = selected.name if selected else Path(self.stamp_path).stem
+            name = simpledialog.askstring("Guardar sello", "Nombre del sello (se guardan también tamaño, posición y capa):",
+                                          initialvalue=initial, parent=self)
+            if name is None:
+                return
+            duplicate = next((entry for entry in self.library.list() if entry.name.casefold() == name.strip().casefold()), None)
+            if duplicate and not messagebox.askyesno("Reemplazar sello", f'Ya existe «{duplicate.name}». ¿Reemplazar su imagen y ajustes?', parent=self):
+                return
+            saved = self.library.save(name, self.stamp[0], options, replace_id=duplicate.id if duplicate else None)
+            self.stamp_path = str(saved.path)
+            self.stamp_label.configure(text=saved.name)
+            self.refresh_library(saved.id)
+            self.status.set(f'Sello «{saved.name}» guardado. Podrás usarlo en otros documentos y al volver a abrir la app.')
+        except (OSError, ValueError) as exc:
+            messagebox.showerror("No se pudo guardar el sello", str(exc), parent=self)
+
+    def select_saved_stamp(self, *_):
+        index = self.library_selector.current()
+        if self.busy or index < 0 or index >= len(self.saved_stamps):
+            return
+        entry = self.saved_stamps[index]
+        try:
+            stamp = load_stamp(entry.path)
+        except (OSError, ValueError) as exc:
+            messagebox.showerror("No se pudo abrir el sello guardado", str(exc), parent=self)
+            self.refresh_library()
+            return
+        self.stamp_path, self.stamp = str(entry.path), stamp
+        self.selected_stamp_id = entry.id
+        self.stamp_label.configure(text=entry.name)
+        self.updating_position = True
+        try:
+            self.width_value.set(str(entry.options.width_mm))
+            self.top_value.set(str(entry.options.top_mm))
+            self.right_value.set(str(entry.options.right_mm))
+            self.layer_value.set(next(label for label, layer in LAYERS.items() if layer == entry.options.layer))
+        finally:
+            self.updating_position = False
+        self.schedule_preview()
+        self.update_controls()
+        self.status.set(f'Sello «{entry.name}» cargado con sus ajustes. Puedes adaptarlos a este documento.')
+
+    def delete_saved_stamp(self):
+        if self.busy or not self.selected_stamp_id:
+            return
+        entry = next((item for item in self.saved_stamps if item.id == self.selected_stamp_id), None)
+        if entry is None or not messagebox.askyesno("Eliminar sello guardado",
+                f'¿Eliminar «{entry.name}» de la biblioteca? La imagen original y los PDF se conservan.', parent=self):
+            return
+        try:
+            self.library.remove(entry.id)
+        except OSError as exc:
+            messagebox.showerror("No se pudo eliminar el sello", str(exc), parent=self)
+            return
+        self.selected_stamp_id = None
+        self.stamp_path, self.stamp = None, None
+        self.stamp_label.configure(text="PNG, JPG, WEBP, BMP o TIFF")
+        self.refresh_library()
+        self.draw_preview()
+        self.status.set("Sello eliminado de la biblioteca. Selecciona otro para continuar.")
+
     def update_controls(self):
+        if self.busy:
+            self.progress.grid()
+        else:
+            self.progress.grid_remove()
         for control in self.controls:
             control.state(["disabled"] if self.busy else ["!disabled"])
         if not self.pdf or not self.stamp:
             self.save_button.state(["disabled"])
+        self.library_selector.configure(state="disabled" if self.busy or not self.saved_stamps else "readonly")
+        if not self.stamp:
+            self.save_stamp_button.state(["disabled"])
+        if not self.selected_stamp_id:
+            self.delete_stamp_button.state(["disabled"])
         self.document_selector.configure(state="disabled" if self.busy or not self.pdf_files else "readonly")
         self.layer_selector.configure(state="disabled" if self.busy else "readonly")
         self.save_button.configure(text="Sellar toda la carpeta" if self.folder else "Guardar PDF sellado…")
@@ -279,6 +453,8 @@ class StampApp(tk.Tk):
         self.schedule_preview()
 
     def schedule_preview(self, *_):
+        if self.updating_position:
+            return
         self.preview_version += 1
         self.preview_image, self.page_size, self.preview_error = None, None, None
         self.draw_preview()
@@ -401,7 +577,7 @@ class StampApp(tk.Tk):
                 self.update_controls()
             self.worker.join(timeout=0)
             self.worker = None
-        self.after(80, self.poll)
+        self.poll_timer = self.after(80, self.poll)
 
     def show_batch_result(self, result):
         dialog = tk.Toplevel(self)
@@ -439,6 +615,19 @@ class StampApp(tk.Tk):
             messagebox.showinfo("Guardado en curso", "Espera a que termine el guardado antes de cerrar.")
         else:
             self.destroy()
+
+    def destroy(self):
+        for timer in (getattr(self, "preview_timer", None), getattr(self, "poll_timer", None)):
+            if timer:
+                self.after_cancel(timer)
+        if getattr(self, "worker", None) is not None:
+            if self.worker.is_alive():
+                self.worker.terminate()
+            self.worker.join(timeout=1)
+        if hasattr(self, "events"):
+            self.events.close()
+            self.events.cancel_join_thread()
+        super().destroy()
 
 
 if __name__ == "__main__":

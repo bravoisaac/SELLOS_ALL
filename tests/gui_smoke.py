@@ -7,6 +7,7 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 import pymupdf
+from PIL import ImageGrab
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app import StampApp
@@ -22,12 +23,58 @@ def wait_until(app, predicate, timeout=30):
         time.sleep(.02)
 
 
+def check_responsive_layout(app):
+    options = app.options()
+    app.deiconify()
+    for size, mode in [("1180x820", "wide"), ("800x600", "compact"), ("640x520", "compact"), ("1024x640", "wide")]:
+        app.geometry(size + "+20+20")
+        app.update()
+        wait_until(app, lambda: app.layout_mode == mode)
+        assert app.save_button.winfo_ismapped()
+        assert app.save_button.winfo_rooty() + app.save_button.winfo_height() <= app.winfo_rooty() + app.winfo_height()
+        if mode == "compact":
+            app.active_panel.set("settings")
+            app.show_panel()
+            app.update()
+            app.settings_panel.reveal(app.layer_selector)
+            app.update()
+            assert app.layer_selector.winfo_rooty() >= app.settings_panel.canvas.winfo_rooty()
+            assert app.layer_selector.winfo_rooty() + app.layer_selector.winfo_height() <= app.settings_panel.canvas.winfo_rooty() + app.settings_panel.canvas.winfo_height()
+            app.active_panel.set("preview")
+            app.show_panel()
+            app.update()
+            assert app.preview_panel.winfo_ismapped()
+            assert not app.settings_panel.winfo_ismapped()
+        else:
+            assert app.preview_panel.winfo_ismapped() and app.settings_panel.winfo_ismapped()
+        assert app.preview.canvas.winfo_width() > 250
+        assert app.preview.canvas.winfo_height() > 70
+        assert app.options() == options
+    app.geometry("1180x820+20+20")
+    app.update()
+
+
+def capture(app, name):
+    destination = Path(__file__).resolve().parents[1] / "tmp" / "qa"
+    destination.mkdir(parents=True, exist_ok=True)
+    app.attributes("-topmost", True)
+    app.update()
+    # Allow the preview's resize debounce to settle before capturing our own test window.
+    deadline = time.monotonic() + .3
+    while time.monotonic() < deadline:
+        app.update()
+        time.sleep(.02)
+    x, y = app.winfo_rootx(), app.winfo_rooty()
+    ImageGrab.grab(bbox=(x, y, x + app.winfo_width(), y + app.winfo_height())).save(destination / name)
+    app.attributes("-topmost", False)
+
+
 def main():
     fixture = BatchTests()
     fixture.setUp()
-    app = StampApp()
+    library_dir = fixture.folder / "library"
+    app = StampApp(library_dir=library_dir)
     app.update_idletasks()
-    app.withdraw()
     errors = []
     results = []
     app.show_batch_result = results.append
@@ -93,7 +140,57 @@ def main():
                 app.choose_pdf()
             assert app.folder is None
             assert app.save_button["text"] == "Guardar PDF sellado…"
-            print("GUI OK: tres capas, carpeta, zoom, arrastre conservando capa y posición, exportación de lote y modo individual.")
+            wait_until(app, lambda: app.preview_image is not None and not app.preview_busy)
+            check_responsive_layout(app)
+            with patch("app.simpledialog.askstring", return_value="Firma oficina"):
+                app.save_stamp_to_library()
+            assert len(app.saved_stamps) == 1
+            saved_options = app.options()
+            saved_path = Path(app.stamp_path)
+            assert saved_path.parent == library_dir
+            # Cancelar un reemplazo no debe alterar el sello guardado.
+            before = saved_path.read_bytes()
+            with patch("app.simpledialog.askstring", return_value="Firma oficina"), patch("app.messagebox.askyesno", return_value=False):
+                app.save_stamp_to_library()
+            assert saved_path.read_bytes() == before
+            capture(app, "responsive-wide.png")
+            app.geometry("640x520+20+20")
+            app.active_panel.set("settings")
+            app.update()
+            app.show_panel()
+            app.settings_panel.canvas.yview_moveto(0)
+            capture(app, "responsive-compact-settings.png")
+            app.active_panel.set("preview")
+            app.show_panel()
+            capture(app, "responsive-compact-preview.png")
+            app.destroy()
+            original_moved = fixture.image.with_name("original-movido.png")
+            fixture.image.rename(original_moved)
+            # Una nueva ventana vuelve a leer la biblioteca sin depender de la imagen original.
+            app = StampApp(library_dir=library_dir)
+            app.update()
+            assert len(app.saved_stamps) == 1
+            app.library_selector.current(0)
+            app.select_saved_stamp()
+            assert app.options() == saved_options
+            assert Path(app.stamp_path) == saved_path
+            with patch("app.filedialog.askopenfilename", return_value=str(fixture.folder / "uno.pdf")):
+                app.choose_pdf()
+            wait_until(app, lambda: app.preview_image is not None and not app.preview_busy)
+            target = fixture.folder / "reutilizado.pdf"
+            with patch("app.filedialog.asksaveasfilename", return_value=str(target)):
+                app.save()
+            wait_until(app, lambda: not app.busy)
+            assert target.exists()
+            with pymupdf.open(target) as doc:
+                assert all(page.get_images() for page in doc)
+            with patch("app.messagebox.askyesno", return_value=True):
+                app.delete_saved_stamp()
+            assert not saved_path.exists()
+            assert original_moved.exists()
+            assert not app.saved_stamps and app.stamp is None
+            assert not errors, errors
+            print("GUI OK: capas, exportación, cuatro tamaños, biblioteca persistente, reutilización tras reinicio y eliminación sin tocar originales.")
     finally:
         if app.worker:
             app.worker.join(timeout=5)

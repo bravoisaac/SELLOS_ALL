@@ -6,11 +6,11 @@ Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas 
 
 **[Descargar SelloPDF.exe — Windows de 64 bits](SelloPDF.exe?raw=true)**
 
-**Versión de prueba del 18 de noviembre de 2026.** Descarga únicamente el ejecutable. Guárdalo y ábrelo con doble clic; no necesita instalación, Python ni archivos adicionales.
+**Versión de prueba del 18 de noviembre de 2026.** Incluye ventana adaptable y biblioteca de sellos reutilizables. Descarga únicamente el ejecutable. Guárdalo y ábrelo con doble clic; no necesita instalación, Python ni archivos adicionales.
 
-Se reconstruyó desde dependencias oficiales verificadas por SHA-256. Pasaron las 32 pruebas del motor, la prueba gráfica con exportación y la apertura/cierre del nuevo ejecutable. Defender no registró detecciones en el análisis local. **Todavía no tiene firma digital:** Opera u otras políticas de Windows podrían bloquearlo. Si aparece una alerta, no fuerces su ejecución ni desactives la protección.
+Se reconstruyó desde dependencias oficiales verificadas por SHA-256. Pasaron 41 pruebas del motor y de la biblioteca, la integración gráfica en cuatro tamaños de ventana, la reutilización de sellos tras reiniciar y la apertura/cierre del nuevo ejecutable. Defender no registró detecciones en el análisis local. **Todavía no tiene firma digital:** Opera u otras políticas de Windows podrían bloquearlo. Si aparece una alerta, no fuerces su ejecución ni desactives la protección.
 
-SHA-256 de esta descarga: `7F15B52BB45E7FF4B90C2238C909EEA8B8A29C6F3DF44EB9DAB9EE55BC0385E3`.
+SHA-256 de esta descarga: `9B985D56ADC009EA0502C7B6CC16E74D86D7D884EF146C9B45349B5961CB5579`.
 
 ### Compilación anterior retirada
 
@@ -21,6 +21,8 @@ Defender detectó `Trojan:Win32/Ulthar.A!ml` en el ejecutable anterior, cuyo SHA
 - Sellar un PDF o todos los PDF de una carpeta con la misma imagen.
 - Arrastrar el sello a la posición deseada y elegir su capa: **al fondo, al medio o delante del texto**.
 - Ajustar ancho y márgenes en milímetros y ampliar la vista previa con zoom.
+- Guardar sellos con nombre, imagen, tamaño, márgenes y capa para reutilizarlos en otros documentos.
+- Trabajar en ventanas amplias o compactas, con controles desplazables y el botón de guardar siempre visible.
 - Guardar copias sin modificar los originales.
 - Continuar ante errores individuales y generar un informe al procesar carpetas.
 
@@ -30,7 +32,7 @@ Las instrucciones siguientes describen el uso de una versión validada; no ejecu
 
 1. Abre la versión validada de `SelloPDF.exe` con doble clic. No necesita Python instalado.
 2. Pulsa **Un PDF…** y elige el documento.
-3. Pulsa **Seleccionar imagen del sello**. Admite PNG, JPG, WEBP, BMP y TIFF.
+3. Pulsa **Elegir imagen del sello** o elige uno guardado en **Mis sellos**. Admite PNG, JPG, WEBP, BMP y TIFF.
 4. Ajusta el ancho y los márgenes superior y derecho en milímetros. Por defecto usa un ancho de 35 mm y márgenes de 10 mm. La altura conserva la proporción de la imagen.
 5. Arrastra el sello en la vista previa y revisa las páginas con las flechas. Usa **+**, **−** o **Ctrl + rueda del mouse** para ampliar o reducir.
 6. Elige **Capa del sello**: Al fondo, Al medio (debajo del texto) o Delante del texto.
@@ -39,6 +41,22 @@ Las instrucciones siguientes describen el uso de una versión validada; no ejecu
 El original se conserva. La vista previa refleja la capa elegida, también al sellar carpetas. Para evitar un rectángulo de fondo en la propia imagen del sello, utiliza PNG con transparencia. Los bordes vacíos de la imagen forman parte de su tamaño; recórtalos antes si necesitas un ajuste preciso.
 
 Si el sello no cabe en alguna página, el proceso se detiene y permite ajustar las medidas. Los PDF que requieren contraseña o no permiten modificaciones deben abrirse previamente como una copia autorizada sin esas restricciones. Modificar un PDF con firma digital puede invalidar esa firma; este programa coloca una imagen, no una firma digital.
+
+## Guardar y reutilizar sellos
+
+1. En **Mis sellos**, pulsa **Elegir imagen del sello** y selecciona tu imagen.
+2. Ajusta su ancho, márgenes y capa. Puedes guardarlo incluso sin tener un PDF abierto.
+3. Pulsa **Guardar sello…**, escribe un nombre y confirma. La app guarda una copia de la imagen junto con sus ajustes.
+4. Para usarlo en otro documento o después de cerrar y abrir la app, selecciónalo en la lista de **Mis sellos**. Puedes modificar sus ajustes para ese documento sin cambiar la copia guardada.
+5. Para actualizar un sello, vuelve a guardarlo con el mismo nombre y confirma el reemplazo. **Eliminar…** pide confirmación y borra solo la copia de la biblioteca; conserva la imagen original y los PDF.
+
+Los sellos se guardan en `%LOCALAPPDATA%\SelloPDF\sellos`, dentro de tu perfil de Windows. Seguirán disponibles aunque muevas la imagen original o actualices el ejecutable. Puedes respaldar esa carpeta; no se incluye dentro del `.exe` ni se sincroniza por internet.
+
+## Ventanas pequeñas
+
+La ventana admite tamaños desde **640 × 520 píxeles**. En ventanas amplias, los ajustes y el documento se muestran lado a lado. Al reducir el ancho aparecen las pestañas **Archivos y sellos** y **Vista previa**, que conservan tus selecciones al cambiar entre ellas.
+
+Desplázate por los ajustes con la rueda o la barra lateral; al navegar con **Tab**, el control enfocado se hace visible. **Guardar PDF sellado** permanece en la parte inferior. En la vista previa puedes ampliar con **+** o **Ctrl + rueda**.
 
 ## Sellar una carpeta completa
 
@@ -102,13 +120,16 @@ La versión de prueba enlazada arriba se copió manualmente a `SelloPDF.exe` en 
 
 - `app.py`: ventana, vista previa, navegación, progreso y selección de archivos.
 - `preview.py`: zoom, desplazamiento, capas de vista previa y arrastre del sello.
+- `ui_components.py`: panel de ajustes desplazable con acceso por rueda y teclado.
+- `stamp_library.py`: biblioteca local de sellos, copias PNG con ajustes y reemplazo atómico.
 - `stamping.py`: validación, geometría y guardado mediante archivo temporal y reemplazo atómico.
 - `pdf_layers.py`: separación vectorial entre gráficos y texto para la capa intermedia, con verificación de apariencia.
 - `tests/test_stamping.py`: páginas rotadas 0/90/180/270 grados, recorte, transparencia, JPEG, medidas inválidas, archivos protegidos, preservación de originales y coincidencia de vista previa con salida.
 - `tests/test_batch.py`: carpetas con varios PDF, errores parciales, informes, exclusión de subcarpetas y conservación de resultados anteriores.
 - `tests/test_preview.py`: conversión del arrastre, límites de página y coincidencia de las capas con la salida en páginas rotadas y recortadas.
 - `tests/test_layers.py`: tres órdenes de capas, fondos de imagen, texto seleccionable, formularios gráficos anidados, enlaces, campos y documentos que no admiten separación.
-- `tests/gui_smoke.py`: integración de selección de carpeta, vista previa, proceso de lote, resumen y regreso al modo individual; requiere escritorio Windows disponible.
+- `tests/test_stamp_library.py`: persistencia, transparencia, reemplazo atómico, nombres duplicados, archivos dañados y conservación de originales.
+- `tests/gui_smoke.py`: integración de selección de carpeta, vista previa, exportación, cuatro tamaños de ventana y reutilización de sellos tras reiniciar y mover la imagen original; requiere escritorio Windows disponible.
 - `tests/release_checks.ps1`: ocho escenarios de análisis y remediación simulados; verifica que una detección, protección desactivada o error impidan validar una entrega, sin modificar Defender.
 - `requirements-windows.lock`: diez dependencias de compilación, con URLs oficiales y hashes SHA-256 para Python 3.12/Windows x64.
 - `MAPA.md`: conexiones y alcance del proyecto.

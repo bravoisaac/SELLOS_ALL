@@ -74,8 +74,9 @@ class PreviewPane(ttk.Frame):
         self.canvas.bind("<Control-MouseWheel>", self.wheel_zoom)
         self.canvas.bind("<Shift-MouseWheel>", self.wheel_horizontal)
         self.canvas.bind("<Escape>", self.cancel_drag)
-        ttk.Label(self, text="Arrastra el sello · Ctrl + rueda: zoom · Rueda: desplazar",
-                  style="Muted.TLabel").pack(anchor="w", pady=(7, 0))
+        self.help_label = ttk.Label(self, text="Arrastra el sello · Ctrl + rueda: zoom · Rueda: desplazar",
+                                    style="Muted.TLabel", wraplength=400)
+        self.help_label.pack(anchor="w", pady=(7, 0))
 
     def set_content(self, source, page_size, stamp, options, error=None, enabled=True):
         self.cancel_drag()
@@ -89,12 +90,15 @@ class PreviewPane(ttk.Frame):
         self.error, self.enabled = error, enabled
         self.redraw()
 
-    def resize(self, *_):
+    def resize(self, event):
+        self.help_label.configure(wraplength=max(200, event.width))
         if self._resize_timer:
             self.after_cancel(self._resize_timer)
         self._resize_timer = self.after(80, self.redraw)
 
     def redraw(self):
+        if self._resize_timer:
+            self.after_cancel(self._resize_timer)
         self._resize_timer = None
         self.cancel_drag()
         c = self.canvas
@@ -121,8 +125,8 @@ class PreviewPane(ttk.Frame):
         base = self.source[0] if isinstance(self.source, tuple) else self.source
         top = self.source[1] if isinstance(self.source, tuple) else None
         if self._base_cache != (iw, ih):
-            self.base_photo = ImageTk.PhotoImage(base.resize((iw, ih), Image.Resampling.LANCZOS))
-            self.top_photo = ImageTk.PhotoImage(top.resize((iw, ih), Image.Resampling.LANCZOS)) if top is not None else None
+            self.base_photo = ImageTk.PhotoImage(base.resize((iw, ih), Image.Resampling.LANCZOS), master=c)
+            self.top_photo = ImageTk.PhotoImage(top.resize((iw, ih), Image.Resampling.LANCZOS), master=c) if top is not None else None
             self._base_cache = iw, ih
         layer = self.options.layer if self.options else "background"
         if layer in {"middle", "foreground"}:
@@ -139,7 +143,7 @@ class PreviewPane(ttk.Frame):
                 sw, sh = max(1, round(width * self.scale)), max(1, round(height * self.scale))
                 if self._stamp_cache != (sw, sh):
                     with Image.open(io.BytesIO(self.stamp[0])) as image:
-                        self.stamp_photo = ImageTk.PhotoImage(image.resize((sw, sh), Image.Resampling.LANCZOS))
+                        self.stamp_photo = ImageTk.PhotoImage(image.resize((sw, sh), Image.Resampling.LANCZOS), master=c)
                     self._stamp_cache = sw, sh
                 sx, sy = ox + x * self.scale, oy + y * self.scale
                 self.bounds = (sx, sy, sx + width * self.scale, sy + height * self.scale)
@@ -244,3 +248,8 @@ class PreviewPane(ttk.Frame):
     def wheel_zoom(self, event):
         self.change_zoom(1.25 if event.delta > 0 else .8, (event.x, event.y))
         return "break"
+
+    def destroy(self):
+        if self._resize_timer:
+            self.after_cancel(self._resize_timer)
+        super().destroy()
