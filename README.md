@@ -2,15 +2,19 @@
 
 Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas las páginas** de un PDF y permite elegir si queda al fondo, al medio o delante del texto. El sello comienza arriba a la derecha y puedes moverlo con el mouse en la vista previa. Funciona localmente, sin subir documentos a internet.
 
-## Descarga suspendida
+## Descargar para Windows
 
-**18 de noviembre de 2026:** Windows Defender detectó `Trojan:Win32/Ulthar.A!ml` en la compilación distribuida de `SelloPDF.exe`. El enlace se retiró de este README mientras se investiga. No se ha confirmado que sea un falso positivo. No ejecutes ni restaures ese archivo y no añadas exclusiones al antivirus. Los binarios de entregas anteriores, incluido el ZIP, no constituyen una alternativa validada.
+**[Descargar SelloPDF.exe — Windows de 64 bits](SelloPDF.exe?raw=true)**
 
-El archivo detectado tiene SHA-256 `E3687EC15C8846366545481DE1137A488DEBA16631FD41438CC552D40CF0D778`. Las pruebas funcionales y la disponibilidad de la descarga no certifican su seguridad.
+**Versión de prueba del 18 de noviembre de 2026.** Descarga únicamente el ejecutable. Guárdalo y ábrelo con doble clic; no necesita instalación, Python ni archivos adicionales.
 
-Además, este equipo bloquea el ejecutable y una biblioteca gráfica por su política de firmas. La publicación se retomará después de revisar la detección con el proveedor, verificar el funcionamiento y resolver la firma requerida por los equipos de destino. No se recomienda desactivar la protección de Windows.
+Se reconstruyó desde dependencias oficiales verificadas por SHA-256. Pasaron las 32 pruebas del motor, la prueba gráfica con exportación y la apertura/cierre del nuevo ejecutable. Defender no registró detecciones en el análisis local. **Todavía no tiene firma digital:** Opera u otras políticas de Windows podrían bloquearlo. Si aparece una alerta, no fuerces su ejecución ni desactives la protección.
 
-**Validación del nuevo candidato:** reconstruido desde dependencias oficiales verificadas por SHA-256. Pasaron las 32 pruebas del motor, la prueba gráfica con exportación y la apertura/cierre del nuevo ejecutable. Defender no registró detecciones en ese análisis local. El candidato sigue sin firma y no está publicado; estos resultados no demuestran que la alerta anterior fuera un falso positivo ni garantizan que Opera permita la descarga.
+SHA-256 de esta descarga: `7F15B52BB45E7FF4B90C2238C909EEA8B8A29C6F3DF44EB9DAB9EE55BC0385E3`.
+
+### Compilación anterior retirada
+
+Defender detectó `Trojan:Win32/Ulthar.A!ml` en el ejecutable anterior, cuyo SHA-256 es `E3687EC15C8846366545481DE1137A488DEBA16631FD41438CC552D40CF0D778`. No ejecutes ni restaures esa copia. El ZIP anterior tampoco es una alternativa validada. El resultado del nuevo análisis no demuestra que aquella alerta fuera un falso positivo; la revisión con el proveedor sigue pendiente.
 
 ## Qué permite hacer
 
@@ -91,6 +95,8 @@ Pruebas y compilación:
 La compilación requiere Defender activo y permisos para consultar sus detecciones. Analiza el entorno, comprueba las dependencias gráficas, ejecuta las pruebas del motor y de la interfaz, genera un candidato, analiza el ejecutable y comprueba su apertura y cierre. Cualquier fallo detiene el proceso y queda registrado en `build/release-<id>/validation.json`. No se desactiva ni modifica la protección.
 
 El candidato permanece en `build/release-<id>/dist/SelloPDF.exe`; no se copia automáticamente a la raíz ni se publica. Un análisis sin detecciones no revoca el aviso anterior: antes de distribuirlo falta la revisión del proveedor y, donde corresponda, una firma de código aceptada. Los archivos antiguos en `dist/`, en la raíz o en el ZIP no se actualizan al fallar una compilación.
+
+La versión de prueba enlazada arriba se copió manualmente a `SelloPDF.exe` en la raíz y se verificó contra el informe de validación. Para actualizar la descarga en GitHub, publica ese ejecutable y este README juntos; el enlace relativo usa el archivo de la misma rama.
 
 ## Archivos y validación
 
