@@ -1,5 +1,6 @@
 # Mapa del proyecto
 
+- Descarga de escritorio: `README.md` → descarga directa de `SelloPDF-Windows-x64.zip` en GitHub → extraer y abrir `dist/SelloPDF.exe`. El ZIP está versionado; `dist/` está excluido por `.gitignore`. Corrección limitada a `README.md` y este mapa, sin cambios en código ni binarios; riesgo bajo. Validación: enlace HTTP 200 con tipo `application/zip` y ejecutable presente dentro del ZIP.
 - Objetivo: aplicación Windows portable que agrega una imagen arriba a la derecha de cada página de un PDF o de todos los PDF de una carpeta.
 - Framework: Python, Tkinter/ttk, Pillow y PyMuPDF; empaquetado con PyInstaller.
 - Entrada: `app.py`.

@@ -6,14 +6,13 @@ Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas 
 
 **Última actualización: 29 de octubre de 2026.** Esta entrega incluye el selector de capas **Al fondo / Al medio / Delante del texto**, el movimiento del sello con el mouse, zoom y sellado de carpetas completas.
 
-- **[Descargar el ejecutable actualizado — SelloPDF.exe](dist/SelloPDF.exe)** — aplicación portable para Windows de 64 bits.
-- **[Descargar el ZIP actualizado](SelloPDF-Windows-x64.zip)** — el mismo ejecutable, este README y el código fuente de esta entrega.
+- **[Descargar Sello PDF para Windows de 64 bits (ZIP)](https://github.com/bravoisaac/SELLOS_ALL/raw/refs/heads/main/SelloPDF-Windows-x64.zip)** — incluye el ejecutable portable `dist/SelloPDF.exe`, el README y el código fuente de esta entrega.
 
 No requiere instalación, Python ni conexión a internet para funcionar. Si descargas el ZIP, extrae todo su contenido y abre `dist/SelloPDF.exe` con doble clic.
 
 Si tienes una versión anterior abierta, ciérrala y abre el ejecutable de esta entrega. Para reconocer la versión actual, comprueba que aparezca el selector **Capa del sello** con las tres opciones, además de los controles **+**, **−** y **Ajustar** en la vista previa.
 
-Estos enlaces apuntan a los archivos incluidos en esta entrega local. Para ofrecer descargas públicas, publica el ejecutable o el ZIP en un servicio de alojamiento y reemplaza los enlaces por sus direcciones de descarga.
+El enlace descarga directamente el ZIP publicado en este repositorio. El ejecutable está dentro del ZIP; la carpeta `dist/` no se publica por separado. Si ya tienes una copia local del proyecto, también puedes abrir `dist/SelloPDF.exe` si está disponible o extraer `SelloPDF-Windows-x64.zip`.
 
 ## Qué permite hacer
 
