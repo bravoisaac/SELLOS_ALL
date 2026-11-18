@@ -1,6 +1,6 @@
 # Mapa del proyecto
 
-- Descarga de escritorio: `README.md` → descarga directa de `SelloPDF-Windows-x64.zip` en GitHub → extraer y abrir `dist/SelloPDF.exe`. El ZIP está versionado; `dist/` está excluido por `.gitignore`. Corrección limitada a `README.md` y este mapa, sin cambios en código ni binarios; riesgo bajo. Validación: enlace HTTP 200 con tipo `application/zip` y ejecutable presente dentro del ZIP.
+- Descarga de escritorio: `README.md` → descarga directa de `SelloPDF.exe` en la raíz de `main` → abrir la app sin extraer archivos. `build.ps1` comprueba Tk y Pillow antes de compilar y copia `dist/SelloPDF.exe` a la raíz para su publicación; `dist/` continúa excluido por `.gitignore`. Archivos de este cambio: `README.md`, `build.ps1`, `SelloPDF.exe` y este mapa. Riesgo bajo para el código; publicación del binario pendiente. Las 32 pruebas del motor pasaron y el paquete contiene Tcl/Tk; la política de integridad de Windows bloqueó el ejecutable y la biblioteca gráfica de Pillow, por lo que no se pudo validar el funcionamiento completo. En equipos con esa política se necesita firma aceptada o autorización del administrador.
 - Objetivo: aplicación Windows portable que agrega una imagen arriba a la derecha de cada página de un PDF o de todos los PDF de una carpeta.
 - Framework: Python, Tkinter/ttk, Pillow y PyMuPDF; empaquetado con PyInstaller.
 - Entrada: `app.py`.

@@ -6,13 +6,17 @@ Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas 
 
 **Última actualización: 29 de octubre de 2026.** Esta entrega incluye el selector de capas **Al fondo / Al medio / Delante del texto**, el movimiento del sello con el mouse, zoom y sellado de carpetas completas.
 
-- **[Descargar Sello PDF para Windows de 64 bits (ZIP)](https://github.com/bravoisaac/SELLOS_ALL/raw/refs/heads/main/SelloPDF-Windows-x64.zip)** — incluye el ejecutable portable `dist/SelloPDF.exe`, el README y el código fuente de esta entrega.
+- **[Descargar SelloPDF.exe para Windows de 64 bits](https://github.com/bravoisaac/SELLOS_ALL/raw/refs/heads/main/SelloPDF.exe)** — descarga únicamente la aplicación portable en un solo archivo.
 
-No requiere instalación, Python ni conexión a internet para funcionar. Si descargas el ZIP, extrae todo su contenido y abre `dist/SelloPDF.exe` con doble clic.
+Guarda `SelloPDF.exe` y ábrelo con doble clic. No necesitas extraer un ZIP, instalar Python ni descargar archivos adicionales. El procesamiento de documentos funciona sin conexión a internet.
 
 Si tienes una versión anterior abierta, ciérrala y abre el ejecutable de esta entrega. Para reconocer la versión actual, comprueba que aparezca el selector **Capa del sello** con las tres opciones, además de los controles **+**, **−** y **Ajustar** en la vista previa.
 
-El enlace descarga directamente el ZIP publicado en este repositorio. El ejecutable está dentro del ZIP; la carpeta `dist/` no se publica por separado. Si ya tienes una copia local del proyecto, también puedes abrir `dist/SelloPDF.exe` si está disponible o extraer `SelloPDF-Windows-x64.zip`.
+El enlace apunta a `SelloPDF.exe` en la raíz de la rama `main` del repositorio. Al publicar una entrega, sube ese archivo junto con este README para mantener disponible la descarga.
+
+### Si Windows bloquea la apertura
+
+Esta compilación no tiene firma de código. Si aparece «Una directiva de Control de aplicaciones bloqueó este archivo», el equipo requiere una versión firmada con un certificado aceptado por su política o la autorización del administrador. Ese bloqueo impide abrir la app; no se resuelve descargando nuevamente el archivo.
 
 ## Qué permite hacer
 
@@ -24,7 +28,7 @@ El enlace descarga directamente el ZIP publicado en este repositorio. El ejecuta
 
 ## Uso
 
-1. Abre `dist/SelloPDF.exe` con doble clic. No necesita Python instalado.
+1. Abre el archivo descargado `SelloPDF.exe` con doble clic. No necesita Python instalado.
 2. Pulsa **Un PDF…** y elige el documento.
 3. Pulsa **Seleccionar imagen del sello**. Admite PNG, JPG, WEBP, BMP y TIFF.
 4. Ajusta el ancho y los márgenes superior y derecho en milímetros. Por defecto usa un ancho de 35 mm y márgenes de 10 mm. La altura conserva la proporción de la imagen.
@@ -85,7 +89,7 @@ Pruebas y compilación:
 .\build.ps1
 ```
 
-`build.ps1 -Python 'C:\ruta\python.exe'` permite elegir el intérprete al crear el entorno. El resultado es un ejecutable portable en `dist/SelloPDF.exe`. No incluye instalador ni firma de código.
+`build.ps1 -Python 'C:\ruta\python.exe'` permite elegir el intérprete al crear el entorno. El script comprueba las dependencias gráficas, ejecuta las pruebas y genera `dist/SelloPDF.exe`; después copia el resultado a `SelloPDF.exe` en la raíz para publicarlo con el enlace de descarga. No incluye instalador ni firma de código.
 
 ## Archivos y validación
 
