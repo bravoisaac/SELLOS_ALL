@@ -8,7 +8,19 @@ Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas 
 
 **[Descargar ZIP para Windows 11 x64, con instrucciones](SelloPDF-Windows-x64.zip?raw=true)**
 
-En el otro PC, abre uno de estos enlaces. Si eliges el ZIP, pulsa **Extraer todo** y abre `SelloPDF.exe` desde la carpeta extraída. No requiere Python ni permisos de administrador. El paquete actualizado el **19 de noviembre de 2026** contiene el mismo ejecutable de prueba, `LEEME-WINDOWS.txt` y `SHA256SUMS.txt`; reemplaza el ZIP antiguo. Los sellos guardados se almacenan por usuario y no se transfieren automáticamente entre equipos.
+### Descargar y abrir desde otro PC con Windows 11
+
+1. En el otro PC con **Windows 11 de 64 bits (x64)**, abre [este enlace de descarga del ZIP](https://github.com/bravoisaac/SELLOS_ALL/raw/refs/heads/main/SelloPDF-Windows-x64.zip).
+2. Cuando termine la descarga, haz clic derecho sobre `SelloPDF-Windows-x64.zip` y selecciona **Extraer todo**.
+3. Abre la carpeta extraída y haz doble clic en **SelloPDF.exe**.
+
+No necesitas instalar Python, ejecutar comandos ni usar permisos de administrador. El paquete actualizado el **19 de noviembre de 2026** contiene el ejecutable, `LEEME-WINDOWS.txt` y `SHA256SUMS.txt`; reemplaza el ZIP antiguo. Los sellos guardados se almacenan por usuario y no se transfieren automáticamente entre equipos.
+
+**Comprobaciones realizadas:** 41 pruebas aprobadas, apertura y cierre desde una carpeta independiente con perfil vacío y sin Python en la ruta de ejecución, y análisis local de Defender sin detecciones en el paquete actual. La copia del ejecutable descargada desde GitHub coincide por SHA-256 con la versión validada.
+
+**Si aparece un bloqueo o error:** conserva el mensaje exacto para revisar la causa. Todavía falta la firma digital, por lo que Windows o el navegador podrían mostrar avisos o bloquearlo. Estas comprobaciones no garantizan cero errores en todos los equipos. No desactives el antivirus ni añadas exclusiones para abrirlo.
+
+### Versión incluida
 
 **Versión de prueba del 18 de noviembre de 2026.** Incluye ventana adaptable y biblioteca de sellos reutilizables. Puedes descargar únicamente el ejecutable. Guárdalo y ábrelo con doble clic; no necesita instalación, Python ni archivos adicionales.
 
