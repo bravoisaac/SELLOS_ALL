@@ -6,7 +6,7 @@ Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas 
 
 **[Descargar SelloPDF.exe — Windows de 64 bits](SelloPDF.exe?raw=true)**
 
-**[Descargar ZIP para Windows 11 x64, con instrucciones](SelloPDF-Windows-x64.zip?raw=true)**
+**[Descargar ZIP para Windows 11 x64](SelloPDF-Windows-x64.zip?raw=true)**
 
 ### Descargar y abrir desde otro PC con Windows 11
 
@@ -14,7 +14,7 @@ Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas 
 2. Cuando termine la descarga, haz clic derecho sobre `SelloPDF-Windows-x64.zip` y selecciona **Extraer todo**.
 3. Abre la carpeta extraída y haz doble clic en **SelloPDF.exe**.
 
-No necesitas instalar Python, ejecutar comandos ni usar permisos de administrador. El paquete actualizado el **19 de noviembre de 2026** contiene el ejecutable, `LEEME-WINDOWS.txt` y `SHA256SUMS.txt`; reemplaza el ZIP antiguo. Los sellos guardados se almacenan por usuario y no se transfieren automáticamente entre equipos.
+No necesitas instalar Python, ejecutar comandos ni usar permisos de administrador. El paquete actualizado el **19 de noviembre de 2026** contiene únicamente `SelloPDF.exe` y `SHA256SUMS.txt`; reemplaza el ZIP antiguo. Las instrucciones de uso están en este README. Los sellos guardados se almacenan por usuario y no se transfieren automáticamente entre equipos.
 
 **Comprobaciones realizadas:** 41 pruebas aprobadas, apertura y cierre desde una carpeta independiente con perfil vacío y sin Python en la ruta de ejecución, y análisis local de Defender sin detecciones en el paquete actual. La copia del ejecutable descargada desde GitHub coincide por SHA-256 con la versión validada.
 
@@ -130,7 +130,7 @@ La compilación requiere Defender activo y permisos para consultar sus deteccion
 
 El candidato permanece en `build/release-<id>/dist/SelloPDF.exe`; no se copia automáticamente a la raíz ni se publica. Un análisis sin detecciones no revoca el aviso anterior: antes de distribuirlo falta la revisión del proveedor y, donde corresponda, una firma de código aceptada. Los archivos antiguos en `dist/`, en la raíz o en el ZIP no se actualizan al fallar una compilación.
 
-La versión de prueba enlazada arriba se copió manualmente a `SelloPDF.exe` en la raíz y se verificó contra el informe de validación. Para actualizar las descargas en GitHub, publica juntos ese ejecutable, el ZIP con la misma copia, las instrucciones, las sumas SHA-256 y este README. Los enlaces relativos usan los archivos de la misma rama. Verifica el hash del ejecutable extraído y del descargado después de publicar.
+La versión de prueba enlazada arriba se copió manualmente a `SelloPDF.exe` en la raíz y se verificó contra el informe de validación. Para actualizar las descargas en GitHub, publica juntos ese ejecutable, el ZIP con la misma copia, las sumas SHA-256 y este README. Los enlaces relativos usan los archivos de la misma rama. Verifica el hash del ejecutable extraído y del descargado después de publicar.
 
 ## Archivos y validación
 
