@@ -2,35 +2,26 @@
 
 Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas las páginas** de un PDF y permite elegir si queda al fondo, al medio o delante del texto. El sello comienza arriba a la derecha y puedes moverlo con el mouse en la vista previa. Funciona localmente, sin subir documentos a internet.
 
-## Descargar para Windows
+## Descarga suspendida por detección de Defender
 
-**[Descargar SelloPDF.exe — Windows de 64 bits](SelloPDF.exe?raw=true)**
+**No descargues, ejecutes ni distribuyas esta versión.** El 19 de noviembre de 2026, Microsoft Defender detectó `Trojan:Script/Ulthar.A!ml` en `SelloPDF-Windows-x64 (1).zip`, descargado desde la dirección pública de este repositorio. El historial local registra la acción de protección completada, amenaza no activa y sin ejecución registrada.
 
-**[Descargar ZIP para Windows 11 x64](SelloPDF-Windows-x64.zip?raw=true)**
+Se retiraron los enlaces de descarga. Los binarios que aún figuren entre los archivos o en el historial del repositorio no son una alternativa validada. No restaures copias bloqueadas ni desactives Defender ni añadas exclusiones para abrirlas.
 
-### Descargar y abrir desde otro PC con Windows 11
+Los análisis locales anteriores sin detecciones y las 41 pruebas funcionales **no descartan esta alerta**. Tampoco puede atribuirse a la falta de firma digital ni al archivo de instrucciones eliminado. La causa sigue sin confirmar; no se afirma que sea un falso positivo.
 
-1. En el otro PC con **Windows 11 de 64 bits (x64)**, abre [este enlace de descarga del ZIP](https://github.com/bravoisaac/SELLOS_ALL/raw/refs/heads/main/SelloPDF-Windows-x64.zip).
-2. Cuando termine la descarga, haz clic derecho sobre `SelloPDF-Windows-x64.zip` y selecciona **Extraer todo**.
-3. Abre la carpeta extraída y haz doble clic en **SelloPDF.exe**.
+La revisión debe realizarse a través del [portal oficial de análisis de archivos de Microsoft](https://www.microsoft.com/en-us/wdsi/filesubmission). La entrega permanece suspendida hasta resolver la detección y volver a comprobar la distribución. No se ha enviado una muestra todavía.
 
-No necesitas instalar Python, ejecutar comandos ni usar permisos de administrador. El paquete actualizado el **19 de noviembre de 2026** contiene únicamente `SelloPDF.exe` y `SHA256SUMS.txt`; reemplaza el ZIP antiguo. Las instrucciones de uso están en este README. Los sellos guardados se almacenan por usuario y no se transfieren automáticamente entre equipos.
+Identificadores de los archivos publicados al suspender la descarga (solo para investigación, no para ejecutarlos):
 
-**Comprobaciones realizadas:** 41 pruebas aprobadas, apertura y cierre desde una carpeta independiente con perfil vacío y sin Python en la ruta de ejecución, y análisis local de Defender sin detecciones en el paquete actual. La copia del ejecutable descargada desde GitHub coincide por SHA-256 con la versión validada.
+- ZIP: SHA-256 `AEFC795066A8FDC632334A11F5CFE0C548E071736938E585C385C345625C93BE`.
+- Ejecutable: SHA-256 `9B985D56ADC009EA0502C7B6CC16E74D86D7D884EF146C9B45349B5961CB5579`.
 
-**Si aparece un bloqueo o error:** conserva el mensaje exacto para revisar la causa. Todavía falta la firma digital, por lo que Windows o el navegador podrían mostrar avisos o bloquearlo. Estas comprobaciones no garantizan cero errores en todos los equipos. No desactives el antivirus ni añadas exclusiones para abrirlo.
-
-### Versión incluida
-
-**Versión de prueba del 18 de noviembre de 2026.** Incluye ventana adaptable y biblioteca de sellos reutilizables. Puedes descargar únicamente el ejecutable. Guárdalo y ábrelo con doble clic; no necesita instalación, Python ni archivos adicionales.
-
-Se reconstruyó desde dependencias oficiales verificadas por SHA-256. Pasaron 41 pruebas del motor y de la biblioteca, la integración gráfica en cuatro tamaños de ventana, la reutilización de sellos tras reiniciar y la apertura/cierre del nuevo ejecutable. Defender no registró detecciones en el análisis local. **Todavía no tiene firma digital:** Opera u otras políticas de Windows podrían bloquearlo. Si aparece una alerta, no fuerces su ejecución ni desactives la protección.
-
-SHA-256 de esta descarga: `9B985D56ADC009EA0502C7B6CC16E74D86D7D884EF146C9B45349B5961CB5579`.
+Estos hashes corresponden a las copias del proyecto; el historial consultado no proporciona el hash del ZIP bloqueado en Descargas.
 
 ### Compilación anterior retirada
 
-Defender detectó `Trojan:Win32/Ulthar.A!ml` en el ejecutable anterior, cuyo SHA-256 es `E3687EC15C8846366545481DE1137A488DEBA16631FD41438CC552D40CF0D778`. No ejecutes ni restaures esa copia. Descarta también cualquier ZIP descargado antes del 19 de noviembre de 2026; el ZIP actual contiene el ejecutable cuyo SHA-256 se indica arriba. El resultado del nuevo análisis no demuestra que aquella alerta fuera un falso positivo; la revisión con el proveedor sigue pendiente.
+La compilación anterior también fue retirada tras una detección `Trojan:Win32/Ulthar.A!ml`. Su SHA-256 es `E3687EC15C8846366545481DE1137A488DEBA16631FD41438CC552D40CF0D778`. No la ejecutes ni la restaures.
 
 ## Qué permite hacer
 
@@ -44,7 +35,7 @@ Defender detectó `Trojan:Win32/Ulthar.A!ml` en el ejecutable anterior, cuyo SHA
 
 ## Uso
 
-Las instrucciones siguientes describen el uso de una versión validada; no ejecutes la compilación retirada.
+Las instrucciones siguientes documentan las funciones de la aplicación. La distribución actual está suspendida: no ejecutes los binarios retirados.
 
 1. Abre la versión validada de `SelloPDF.exe` con doble clic. No necesita Python instalado.
 2. Pulsa **Un PDF…** y elige el documento.
@@ -130,7 +121,7 @@ La compilación requiere Defender activo y permisos para consultar sus deteccion
 
 El candidato permanece en `build/release-<id>/dist/SelloPDF.exe`; no se copia automáticamente a la raíz ni se publica. Un análisis sin detecciones no revoca el aviso anterior: antes de distribuirlo falta la revisión del proveedor y, donde corresponda, una firma de código aceptada. Los archivos antiguos en `dist/`, en la raíz o en el ZIP no se actualizan al fallar una compilación.
 
-La versión de prueba enlazada arriba se copió manualmente a `SelloPDF.exe` en la raíz y se verificó contra el informe de validación. Para actualizar las descargas en GitHub, publica juntos ese ejecutable, el ZIP con la misma copia, las sumas SHA-256 y este README. Los enlaces relativos usan los archivos de la misma rama. Verifica el hash del ejecutable extraído y del descargado después de publicar.
+La distribución está suspendida por la nueva detección durante la descarga. Los informes de validación anteriores conservan su valor histórico, pero no autorizan republicar estos binarios. Resolver primero la detección con Microsoft; después revisar el resultado y validar nuevamente la entrega.
 
 ## Archivos y validación
 
