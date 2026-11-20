@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Agrega tu sello a todas las páginas de tus PDF. Procesamiento local en tu navegador, sin instalar programas.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: blob:; connect-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Sello PDF · Tu sello, en cada página</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Sello PDF, inicio"><img src="./icon.svg" alt="" width="36" height="36"><span>Sello<span class="brand-light">PDF</span></span></a>
+    <span class="privacy-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6z"/><path d="m8 12 3 3 5-6"/></svg>Archivos privados, en tu navegador</span>
+  </header>
+  <main>
+    <section class="intro"><div><span class="eyebrow">TU ESPACIO DE DOCUMENTOS</span><h1>Tu sello. En cada página.</h1><p>Elige tus PDF, coloca tu sello y descarga una copia lista para compartir.</p></div><span class="web-label">VERSIÓN WEB</span></section>
+    <div id="notice" class="notice" role="status" aria-live="polite">Todo se procesa en este navegador. Tus PDF e imágenes no se suben a un servidor.</div>
+    <div class="workspace">
+      <aside class="sidebar" aria-label="Ajustes del sello">
+        <fieldset id="controls">
+          <section class="panel-section">
+            <div class="section-title"><h2>Documentos</h2><span id="file-count" class="count">0</span></div>
+            <button id="choose-pdfs" class="button primary-outline full">Elegir PDF</button>
+            <input id="pdf-input" type="file" accept="application/pdf,.pdf" multiple hidden>
+            <button id="choose-folder" class="text-button full">O elegir una carpeta</button>
+            <input id="folder-input" type="file" webkitdirectory multiple hidden>
+            <p class="help">Uno o varios PDF. Conservamos los originales.</p>
+            <label class="field-label" for="file-list">Documento en vista previa</label>
+            <select id="file-list" disabled><option>Sin documentos</option></select>
+          </section>
+          <section class="panel-section">
+            <div class="section-title"><h2>Tu sello</h2><span class="section-hint">PNG · JPG · WEBP</span></div>
+            <button id="choose-image" class="stamp-picker"><span id="stamp-placeholder" class="stamp-plus">+</span><img id="stamp-thumbnail" alt="Imagen del sello" hidden><span><strong id="stamp-name">Elegir imagen del sello</strong><small>PNG con transparencia recomendado</small></span></button>
+            <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp,image/bmp" hidden>
+            <div class="library-heading"><label for="saved-stamps">Mis sellos</label><button id="save-stamp" class="text-button" disabled>Guardar actual</button></div>
+            <div class="library-row"><select id="saved-stamps"><option value="">Elegir sello guardado</option></select><button id="delete-stamp" class="icon-button" title="Eliminar sello guardado" aria-label="Eliminar sello guardado" disabled>×</button></div>
+            <p class="help">Guardados solo en este navegador.</p>
+          </section>
+          <section class="panel-section">
+            <div class="section-title"><h2>Tamaño y posición</h2><button id="reset-position" class="text-button">Restablecer</button></div>
+            <div class="measure-grid"><label>Ancho <span>mm</span><input id="width" type="number" value="35" min="1" max="2000" step="1" inputmode="decimal"></label><label>Margen superior <span>mm</span><input id="top" type="number" value="10" min="0" max="2000" step="1" inputmode="decimal"></label><label>Margen derecho <span>mm</span><input id="right" type="number" value="10" min="0" max="2000" step="1" inputmode="decimal"></label></div>
+            <label class="field-label" for="layer">Capa del sello</label>
+            <select id="layer"><option value="foreground">Delante del texto</option><option value="middle">Al medio · debajo del texto</option><option value="background">Al fondo</option></select>
+            <p id="layer-help" class="help">El sello aparece sobre el contenido del PDF.</p>
+          </section>
+        </fieldset>
+        <div class="export-panel"><button id="export" class="button primary full" disabled>Descargar PDF sellado</button><button id="cancel" class="text-button full" hidden>Cancelar proceso</button><progress id="progress" value="0" max="1" hidden aria-label="Progreso del procesamiento"></progress><p id="export-hint" class="help centered">Selecciona un PDF y una imagen para empezar.</p></div>
+      </aside>
+      <section class="preview-panel" aria-label="Vista previa">
+        <div class="preview-toolbar"><div class="preview-heading"><span class="preview-dot"></span><h2>Vista previa</h2><span id="preview-status">Sin documento</span></div><div class="zoom-controls"><button id="zoom-out" class="icon-button" aria-label="Reducir zoom" disabled>−</button><span id="zoom-label">100%</span><button id="zoom-in" class="icon-button" aria-label="Ampliar zoom" disabled>+</button><button id="fit" class="text-button" disabled>Ajustar</button></div></div>
+        <div id="preview-area" class="preview-area">
+          <div id="empty-preview" class="empty-preview"><div class="empty-art" aria-hidden="true"><svg viewBox="0 0 140 160"><rect x="20" y="12" width="100" height="133" rx="9"/><path d="M39 43h61M39 56h45M39 83h61M39 96h61M39 109h35"/><g transform="rotate(-12 91 122)"><rect class="seal" x="56" y="108" width="70" height="29" rx="4"/><path class="seal-line" d="m72 123 6 6 15-15M101 119h12M101 125h9"/></g></svg></div><h3>Todo empieza con un PDF</h3><p>Arrastra tus documentos aquí o elígelos desde tu equipo.</p><button id="empty-choose" class="button primary">Elegir documentos</button><span class="empty-caption">Sin instalaciones. Sin enviar tus documentos.</span></div>
+          <div id="paper" class="paper" hidden><canvas id="pdf-canvas" aria-label="Página del PDF con el sello"></canvas><div id="stamp-handle" role="button" tabindex="0" aria-label="Mover sello. Usa el mouse o las flechas del teclado." hidden><span>Sello</span></div></div>
+        </div>
+        <div class="preview-footer"><span id="drag-hint">Revisa la posición antes de descargar.</span><div class="page-controls"><button id="previous" class="icon-button" aria-label="Página anterior" disabled>‹</button><span id="page-label">— / —</span><button id="next" class="icon-button" aria-label="Página siguiente" disabled>›</button></div></div>
+      </section>
+    </div>
+    <section id="results" class="results" hidden aria-labelledby="results-title"><div class="section-title"><h2 id="results-title">Tus archivos están listos</h2><span id="result-count"></span></div><div id="result-links"></div></section>
+    <footer class="page-footer"><span>Sello PDF · Hecho para simplificar tu trabajo.</span><span>Una imagen de sello no es una firma digital.</span></footer>
+  </main>
+  <dialog id="save-dialog"><form method="dialog"><h2>Guardar en Mis sellos</h2><p>Conserva la imagen y sus ajustes en este navegador.</p><label class="field-label" for="save-name">Nombre del sello</label><input id="save-name" maxlength="80" required autocomplete="off"><p id="save-error" class="dialog-error" role="alert"></p><div class="dialog-actions"><button class="button" value="cancel" formnovalidate>Cancelar</button><button id="confirm-save" class="button primary" value="save">Guardar sello</button></div></form></dialog>
+  <noscript><p class="notice error">Activa JavaScript para usar Sello PDF en tu navegador.</p></noscript>
+</body>
+</html>

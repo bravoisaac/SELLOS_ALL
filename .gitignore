@@ -4,3 +4,6 @@ build/
 dist/
 tmp/
 *.spec
+node_modules/
+output/
+.playwright-cli/

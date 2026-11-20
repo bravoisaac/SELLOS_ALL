@@ -1,0 +1,16 @@
+{
+  "name": "sello-pdf-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "vendor": "node scripts/prepare-web.mjs",
+    "serve": "node scripts/serve-web.mjs",
+    "check": "node --check docs/app.js && node --check docs/pdf-worker.js"
+  },
+  "dependencies": {
+    "fflate": "0.8.3",
+    "pdfjs-dist": "6.5.438",
+    "pyodide": "314.0.8"
+  }
+}

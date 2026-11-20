@@ -1,0 +1,3 @@
+# Conservar exactamente los recursos de las versiones oficiales vendorizadas.
+docs/vendor/** -text
+docs/vendor/** linguist-vendored
