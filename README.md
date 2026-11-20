@@ -6,7 +6,11 @@ Aplicación de escritorio para Windows de 64 bits. Agrega una imagen en **todas 
 
 **[Descargar SelloPDF.exe — Windows de 64 bits](SelloPDF.exe?raw=true)**
 
-**Versión de prueba del 18 de noviembre de 2026.** Incluye ventana adaptable y biblioteca de sellos reutilizables. Descarga únicamente el ejecutable. Guárdalo y ábrelo con doble clic; no necesita instalación, Python ni archivos adicionales.
+**[Descargar ZIP para Windows 11 x64, con instrucciones](SelloPDF-Windows-x64.zip?raw=true)**
+
+En el otro PC, abre uno de estos enlaces. Si eliges el ZIP, pulsa **Extraer todo** y abre `SelloPDF.exe` desde la carpeta extraída. No requiere Python ni permisos de administrador. El paquete actualizado el **19 de noviembre de 2026** contiene el mismo ejecutable de prueba, `LEEME-WINDOWS.txt` y `SHA256SUMS.txt`; reemplaza el ZIP antiguo. Los sellos guardados se almacenan por usuario y no se transfieren automáticamente entre equipos.
+
+**Versión de prueba del 18 de noviembre de 2026.** Incluye ventana adaptable y biblioteca de sellos reutilizables. Puedes descargar únicamente el ejecutable. Guárdalo y ábrelo con doble clic; no necesita instalación, Python ni archivos adicionales.
 
 Se reconstruyó desde dependencias oficiales verificadas por SHA-256. Pasaron 41 pruebas del motor y de la biblioteca, la integración gráfica en cuatro tamaños de ventana, la reutilización de sellos tras reiniciar y la apertura/cierre del nuevo ejecutable. Defender no registró detecciones en el análisis local. **Todavía no tiene firma digital:** Opera u otras políticas de Windows podrían bloquearlo. Si aparece una alerta, no fuerces su ejecución ni desactives la protección.
 
@@ -14,7 +18,7 @@ SHA-256 de esta descarga: `9B985D56ADC009EA0502C7B6CC16E74D86D7D884EF146C9B45349
 
 ### Compilación anterior retirada
 
-Defender detectó `Trojan:Win32/Ulthar.A!ml` en el ejecutable anterior, cuyo SHA-256 es `E3687EC15C8846366545481DE1137A488DEBA16631FD41438CC552D40CF0D778`. No ejecutes ni restaures esa copia. El ZIP anterior tampoco es una alternativa validada. El resultado del nuevo análisis no demuestra que aquella alerta fuera un falso positivo; la revisión con el proveedor sigue pendiente.
+Defender detectó `Trojan:Win32/Ulthar.A!ml` en el ejecutable anterior, cuyo SHA-256 es `E3687EC15C8846366545481DE1137A488DEBA16631FD41438CC552D40CF0D778`. No ejecutes ni restaures esa copia. Descarta también cualquier ZIP descargado antes del 19 de noviembre de 2026; el ZIP actual contiene el ejecutable cuyo SHA-256 se indica arriba. El resultado del nuevo análisis no demuestra que aquella alerta fuera un falso positivo; la revisión con el proveedor sigue pendiente.
 
 ## Qué permite hacer
 
@@ -114,7 +118,7 @@ La compilación requiere Defender activo y permisos para consultar sus deteccion
 
 El candidato permanece en `build/release-<id>/dist/SelloPDF.exe`; no se copia automáticamente a la raíz ni se publica. Un análisis sin detecciones no revoca el aviso anterior: antes de distribuirlo falta la revisión del proveedor y, donde corresponda, una firma de código aceptada. Los archivos antiguos en `dist/`, en la raíz o en el ZIP no se actualizan al fallar una compilación.
 
-La versión de prueba enlazada arriba se copió manualmente a `SelloPDF.exe` en la raíz y se verificó contra el informe de validación. Para actualizar la descarga en GitHub, publica ese ejecutable y este README juntos; el enlace relativo usa el archivo de la misma rama.
+La versión de prueba enlazada arriba se copió manualmente a `SelloPDF.exe` en la raíz y se verificó contra el informe de validación. Para actualizar las descargas en GitHub, publica juntos ese ejecutable, el ZIP con la misma copia, las instrucciones, las sumas SHA-256 y este README. Los enlaces relativos usan los archivos de la misma rama. Verifica el hash del ejecutable extraído y del descargado después de publicar.
 
 ## Archivos y validación
 

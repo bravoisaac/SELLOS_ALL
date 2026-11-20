@@ -1,0 +1,35 @@
+SELLO PDF — WINDOWS 11 DE 64 BITS (x64)
+Paquete actualizado: 19 de noviembre de 2026
+
+1. Descarga SelloPDF-Windows-x64.zip desde:
+   https://github.com/bravoisaac/SELLOS_ALL/raw/refs/heads/main/SelloPDF-Windows-x64.zip
+2. Haz clic derecho en el ZIP y selecciona "Extraer todo".
+3. Abre la carpeta extraída y haz doble clic en SelloPDF.exe.
+
+No necesitas instalar Python ni ejecutar comandos ni usar permisos de administrador.
+También puedes descargar únicamente el ejecutable:
+https://github.com/bravoisaac/SELLOS_ALL/raw/refs/heads/main/SelloPDF.exe
+
+USO
+Elige un PDF o una carpeta, selecciona la imagen del sello, ajusta su posición
+y pulsa Guardar. Se conservan los documentos originales.
+
+Los sellos guardados pertenecen al usuario de cada PC. Para trasladarlos,
+cierra la aplicación y copia la carpeta %LOCALAPPDATA%\SelloPDF\sellos
+al mismo lugar del perfil del otro PC. Respalda primero los sellos existentes.
+
+SI WINDOWS O EL NAVEGADOR BLOQUEAN EL ARCHIVO
+Esta versión todavía no tiene firma digital. Una comprobación local sin
+detecciones no garantiza que todos los equipos o antivirus la acepten.
+No desactives el antivirus ni añadas exclusiones. Conserva el mensaje exacto
+para revisar la causa; en un PC administrado, consulta al responsable de TI.
+
+El ejecutable antiguo con SHA-256
+E3687EC15C8846366545481DE1137A488DEBA16631FD41438CC552D40CF0D778
+fue retirado por una detección de Defender. No lo ejecutes ni lo restaures.
+Este paquete incluye una copia diferente, comprobada localmente:
+9B985D56ADC009EA0502C7B6CC16E74D86D7D884EF146C9B45349B5961CB5579
+
+El archivo SHA256SUMS.txt permite comprobar la integridad de SelloPDF.exe.
+Código fuente e instrucciones completas:
+https://github.com/bravoisaac/SELLOS_ALL
