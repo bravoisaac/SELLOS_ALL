@@ -1,14 +1,27 @@
 {
   "name": "sello-pdf-web",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "description": "Sello PDF: sellado local de documentos, en web y escritorio",
+  "author": "Sello PDF",
+  "main": "desktop/main.cjs",
   "private": true,
   "type": "module",
   "scripts": {
     "vendor": "node scripts/prepare-web.mjs",
     "serve": "node scripts/serve-web.mjs",
-    "check": "node --check docs/app.js && node --check docs/pdf-worker.js"
+    "check": "node --check docs/app.js && node --check docs/pdf-worker.js && node --check desktop/main.cjs",
+    "desktop": "electron .",
+    "desktop:build": "electron-builder --config desktop/builder.json --win zip --x64 --publish never",
+    "desktop:installer": "electron-builder --config desktop/builder.json --win nsis --x64 --publish never",
+    "desktop:test": "node tests/desktop-smoke.mjs"
   },
-  "dependencies": {
+  "overrides": {
+    "minimatch@>=7.0.0 <=11.0.0": "11.0.9"
+  },
+  "devDependencies": {
+    "electron": "45.5.0",
+    "electron-builder": "26.18.0",
+    "playwright": "1.65.1",
     "fflate": "0.8.3",
     "pdfjs-dist": "6.5.438",
     "pyodide": "314.0.8"

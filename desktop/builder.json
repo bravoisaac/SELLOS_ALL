@@ -1,0 +1,26 @@
+{
+  "appId": "cl.sello.pdf.desktop",
+  "productName": "Sello PDF Escritorio",
+  "directories": { "output": "dist/desktop", "buildResources": "desktop/assets" },
+  "files": ["desktop/main.cjs", "desktop/protocol.cjs", "docs/**/*", "!docs/**/__pycache__/**", "package.json"],
+  "asar": true,
+  "npmRebuild": false,
+  "compression": "maximum",
+  "win": {
+    "target": [{ "target": "zip", "arch": ["x64"] }],
+    "icon": "desktop/assets/icon.ico",
+    "artifactName": "SelloPDF-Escritorio-${version}-Windows-x64.${ext}"
+  },
+  "nsis": {
+    "artifactName": "SelloPDF-Escritorio-${version}-Windows-x64-Setup.${ext}",
+    "oneClick": false,
+    "perMachine": false,
+    "allowElevation": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "runAfterFinish": false,
+    "deleteAppDataOnUninstall": false,
+    "language": "3082"
+  }
+}
